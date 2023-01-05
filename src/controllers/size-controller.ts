@@ -116,3 +116,28 @@ export const patchProfileSize = async (req: any, res: any, next: any) => {
     }
     res.json(profilePost);
   };
+
+export const createAllprofiles = async (req: any, res: any, next: any) => {
+
+  const monthId = req.params.mvid;
+  const sizeArr = req.body
+
+  console.log(monthId, "----sise -> ", sizeArr);
+  let profilePost;
+  try {
+    profilePost = await Profile.updateMany(
+        {month:monthId, 'profiles.ref': '01' },
+        { 'profiles.$.sizes': [ sizeArr ] },
+        { new: true },
+    );
+    // profilePost = await Profile.updateOne(filter, { $set: update });
+  } catch (error) {
+    const err = new HttpError("Something went wrong GET :mvid", 500);
+    return next(error);
+  }
+
+  if (!profile) {
+    throw new HttpError("Could not find month for provided :mvid", 404);
+  }
+  res.json(profilePost);
+};

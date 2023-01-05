@@ -49,8 +49,10 @@ export const getMonth = async (req: any, res: any, next: any) => {
   const monthId = req.params.mvid;
 
   let monthView;
+  console.log('-------------------')
+  console.log(monthId)
   try {
-    monthView = await Profile.findOne({ month: monthId });
+    monthView = await Profile.find({ month: monthId });
   } catch (error) {
     const err = new HttpError("Something went wrong GET :mvid", 500);
     return next(error);
