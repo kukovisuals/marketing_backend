@@ -120,16 +120,17 @@ export const patchProfileSize = async (req: any, res: any, next: any) => {
 export const createAllprofiles = async (req: any, res: any, next: any) => {
 
   const monthId = req.params.mvid;
-  const sizeArr = req.body
+  const profilePayload = req.body
 
-  console.log(monthId, "----sise -> ", sizeArr);
+  console.log(monthId, "----sise -> ", profilePayload);
+  payloadFactory(profilePayload)
   let profilePost;
   try {
-    profilePost = await Profile.updateMany(
-        {month:monthId, 'profiles.ref': '01' },
-        { 'profiles.$.sizes': [ sizeArr ] },
-        { new: true },
-    );
+    // profilePost = await Profile.updateMany(
+    //     {month:monthId, 'profiles.ref': '01' },
+    //     { 'profiles.$.sizes': [ sizeArr ] },
+    //     { new: true },
+    // );
     // profilePost = await Profile.updateOne(filter, { $set: update });
   } catch (error) {
     const err = new HttpError("Something went wrong GET :mvid", 500);
@@ -141,3 +142,70 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
   }
   res.json(profilePost);
 };
+/*
+  ******************************************************************
+  * Utility functions
+  ******************************************************************
+*/
+function payloadFactory(data: any){
+  // get all data
+  for(const payload of data){
+    // pass it to the switch method
+    const type =distributionCenter(payload)
+    console.log('-----------------------------')
+    console.log('type -> ', type)
+    console.log('-----------------------------')
+  }
+
+  function distributionCenter(singleOb:any){
+    const str = singleOb.name
+    const left = formatName(str)
+    const right = formatShippedName(str)
+    const size = formatSizeName(str)
+    console.log('------------ str ------------')
+    console.log(str)
+    console.log('------------ type ------------')
+    console.log(left, right)
+    console.log('------------ size ------------')
+    console.log(size)
+    return left + ' - ' + right
+    // AB_MX - Semi Annual (5 per box)
+  }
+
+  function formatName(str:string){
+    const formatName = str.split('in')
+    const left = handleLeftRight(formatName[0].toLowerCase())
+    const right = handleLeftRight(formatName[1].toLowerCase())
+    console.log('left and right')
+    console.log(left, right)
+    console.log(formatName)
+    
+    return left + '_' + right
+  }
+
+  function formatShippedName(str: string){
+    const formatName = str.split('(')
+    const a = formatName[1].toLowerCase()
+    if(a.includes('quarterly')){
+      return 'Quarterly (3 per box)'
+    } 
+    return 'Semi Annual (5 per box)'
+  }
+
+  function formatSizeName(str: string){
+    const formatName = str.split('in')[2].trim().toLowerCase()
+    return formatName
+  }
+
+  function handleLeftRight(str: string){
+    const name = str.trim().split(' ')
+    if(name.includes('mixed')){
+      return 'MX'
+    } else if(name.includes('neutrals')){
+      return 'NU'
+    }
+    const a = name[0].charAt(0).toUpperCase()
+    const b = name[1].charAt(0).toUpperCase()
+    return a+b
+  }
+}
