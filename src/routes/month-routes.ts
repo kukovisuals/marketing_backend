@@ -8,6 +8,7 @@ import {
   createProfileSize,
   deleteProfileSize,
   patchProfileSize,
+  createAllprofiles
 } from "../controllers/size-controller";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ const router = express.Router();
   ******************************************************************
  */
 router.post("/api/monthViews/:mvid/profiles/:pid/size/:sid", createProfileSize);
+router.post("/api/monthViews/:mvid/profiles/", createAllprofiles);
 router.delete(
   "/api/monthViews/:mvid/profiles/:pid/size/:sid",
   deleteProfileSize
