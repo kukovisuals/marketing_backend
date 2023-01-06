@@ -38,9 +38,9 @@ export const createProfileSize = async (req: any, res: any, next: any) => {
   let profilePost;
   try {
     profilePost = await Profile.findOneAndUpdate(
-        {month:monthId, 'profiles.ref': profileId },
-        { 'profiles.$.sizes': [ sizeArr ] },
-        { new: true },
+      { month: monthId, 'profiles.ref': profileId },
+      { 'profiles.$.sizes': [sizeArr] },
+      { new: true },
     );
     // profilePost = await Profile.updateOne(filter, { $set: update });
   } catch (error) {
@@ -61,77 +61,120 @@ DELETE request for /api/profiles/:pdi/size/:sid
 */
 export const deleteProfileSize = async (req: any, res: any, next: any) => {
 
-    const monthId = req.params.mvid;
-    const profileId = req.params.pid;
-    const sizeId = req.params.sid;
-    const sizeArr = req.body
-  
-    console.log(sizeId, "----delete -> ", sizeArr);
-    let profilePost;
-    try {
-      profilePost = await Profile.findOneAndUpdate(
-          {month:monthId, 'profiles.ref': profileId },
-          { 'profiles.$.sizes': [ sizeArr ] },
-          { new: true },
-      );
-      // profilePost = await Profile.updateOne(filter, { $set: update });
-    } catch (error) {
-      const err = new HttpError("Something went wrong GET :mvid", 500);
-      return next(error);
-    }
-  
-    if (!profile) {
-      throw new HttpError("Could not find month for provided :mvid", 404);
-    }
-    res.json(profilePost);
-  };
-  /*
+  const monthId = req.params.mvid;
+  const profileId = req.params.pid;
+  const sizeId = req.params.sid;
+  const sizeArr = req.body
+
+  console.log(sizeId, "----delete -> ", sizeArr);
+  let profilePost;
+  try {
+    profilePost = await Profile.findOneAndUpdate(
+      { month: monthId, 'profiles.ref': profileId },
+      { 'profiles.$.sizes': [sizeArr] },
+      { new: true },
+    );
+    // profilePost = await Profile.updateOne(filter, { $set: update });
+  } catch (error) {
+    const err = new HttpError("Something went wrong GET :mvid", 500);
+    return next(error);
+  }
+
+  if (!profile) {
+    throw new HttpError("Could not find month for provided :mvid", 404);
+  }
+  res.json(profilePost);
+};
+/*
 ******************************************************************
 PATCH request for /api/profiles/:pdi/size/:sid
 ******************************************************************
 */
 export const patchProfileSize = async (req: any, res: any, next: any) => {
 
-    const monthId = req.params.mvid;
-    const profileId = req.params.pid;
-    const sizeId = req.params.sid;
-    const sizeArr = req.body
-  
-    console.log(sizeId, "----delete -> ", sizeArr);
-    let profilePost;
-    try {
-      profilePost = await Profile.findOneAndUpdate(
-          {month:monthId, 'profiles.ref': profileId },
-          { 'profiles.$.sizes': [ sizeArr ] },
-          { new: true },
-      );
-      // profilePost = await Profile.updateOne(filter, { $set: update });
-    } catch (error) {
-      const err = new HttpError("Something went wrong GET :mvid", 500);
-      return next(error);
-    }
-  
-    if (!profile) {
-      throw new HttpError("Could not find month for provided :mvid", 404);
-    }
-    res.json(profilePost);
-  };
+  const monthId = req.params.mvid;
+  const profileId = req.params.pid;
+  const sizeId = req.params.sid;
+  const sizeArr = req.body
 
+  console.log(sizeId, "----delete -> ", sizeArr);
+  let profilePost;
+  try {
+    profilePost = await Profile.findOneAndUpdate(
+      { month: monthId, 'profiles.ref': profileId },
+      { 'profiles.$.sizes': [sizeArr] },
+      { new: true },
+    );
+    // profilePost = await Profile.updateOne(filter, { $set: update });
+  } catch (error) {
+    const err = new HttpError("Something went wrong GET :mvid", 500);
+    return next(error);
+  }
+
+  if (!profile) {
+    throw new HttpError("Could not find month for provided :mvid", 404);
+  }
+  res.json(profilePost);
+};
+
+interface SizeInput {
+  [index: string]: string[]
+}
 export const createAllprofiles = async (req: any, res: any, next: any) => {
 
   const monthId = req.params.mvid;
   const profilePayload = req.body
 
-  console.log(monthId, "----sise -> ", profilePayload);
-  payloadFactory(profilePayload)
+  // console.log(profilePayload)
+  const dataLength = profilePayload.length
+
+  let profileSizeObject: SizeInput = {}
+
+  for (let i = 0; i < profilePayload.length; i++) {
+    const typeAndSize = payloadFactory(profilePayload[i]);
+    const profileSize = typeAndSize[1];
+    const profileName = typeAndSize[0];
+
+    // console.log(' type -> ', typeAndSize)
+    // console.log(monthId, " name -----> ", profilePayload[i]);
+    const sizeArray = profilePayload[i].pdps2
+    for (let j = 0; j < sizeArray.length; j++) {
+
+      if (!profileSizeObject[profileName + '::' + profileSize])
+        profileSizeObject[profileName + '::' + profileSize] = []
+
+      profileSizeObject[profileName + '::' + profileSize].push(sizeArray[j].name)
+    }
+    // console.log('size ', profileSize)
+  }
+  // console.log('profileSizeObject', profileSizeObject)
+
   let profilePost;
   try {
-    // profilePost = await Profile.updateMany(
-    //     {month:monthId, 'profiles.ref': '01' },
-    //     { 'profiles.$.sizes': [ sizeArr ] },
-    //     { new: true },
-    // );
-    // profilePost = await Profile.updateOne(filter, { $set: update });
+    const dataEntry = Object.entries(profileSizeObject)
+    for (let i = 0; i < dataEntry.length; i++) {
+      const keyName = dataEntry[i][0].split('::')[0]
+      const size = dataEntry[i][0].split('::')[1]
+
+      const sizeArray = dataEntry[i][1]
+      console.log(sizeArray)
+      console.log(size)
+      console.log(keyName)
+      const filter = { month: monthId, 'profiles.name': keyName, }
+      const update =  { $set: { ["profiles.$.sizes.0." + size]: sizeArray } }
+      Profile.updateOne(filter, update , (error: any, result: any) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log(result);
+        }
+      });
+      // profilePost = await Profile.updateMany(
+      //     {month:monthId, 'profiles.name': keyName, },
+      //     { 'profiles.$.sizes': [ sizeArray ] },
+      //     { new: true },
+      // );
+    }
   } catch (error) {
     const err = new HttpError("Something went wrong GET :mvid", 500);
     return next(error);
@@ -147,65 +190,52 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
   * Utility functions
   ******************************************************************
 */
-function payloadFactory(data: any){
-  // get all data
-  for(const payload of data){
-    // pass it to the switch method
-    const type =distributionCenter(payload)
-    console.log('-----------------------------')
-    console.log('type -> ', type)
-    console.log('-----------------------------')
-  }
+function payloadFactory(payload: any) {
 
-  function distributionCenter(singleOb:any){
+  // pass it to the switch method
+  const type = distributionCenter(payload)
+  return type
+
+  function distributionCenter(singleOb: any) {
     const str = singleOb.name
     const left = formatName(str)
     const right = formatShippedName(str)
     const size = formatSizeName(str)
-    console.log('------------ str ------------')
-    console.log(str)
-    console.log('------------ type ------------')
-    console.log(left, right)
-    console.log('------------ size ------------')
-    console.log(size)
-    return left + ' - ' + right
+    return [left + ' - ' + right, size]
     // AB_MX - Semi Annual (5 per box)
   }
 
-  function formatName(str:string){
+  function formatName(str: string) {
     const formatName = str.split('in')
     const left = handleLeftRight(formatName[0].toLowerCase())
     const right = handleLeftRight(formatName[1].toLowerCase())
-    console.log('left and right')
-    console.log(left, right)
-    console.log(formatName)
-    
+
     return left + '_' + right
   }
 
-  function formatShippedName(str: string){
+  function formatShippedName(str: string) {
     const formatName = str.split('(')
     const a = formatName[1].toLowerCase()
-    if(a.includes('quarterly')){
+    if (a.includes('quarterly')) {
       return 'Quarterly (3 per box)'
-    } 
+    }
     return 'Semi Annual (5 per box)'
   }
 
-  function formatSizeName(str: string){
+  function formatSizeName(str: string) {
     const formatName = str.split('in')[2].trim().toLowerCase()
     return formatName
   }
 
-  function handleLeftRight(str: string){
+  function handleLeftRight(str: string) {
     const name = str.trim().split(' ')
-    if(name.includes('mixed')){
+    if (name.includes('mixed')) {
       return 'MX'
-    } else if(name.includes('neutrals')){
+    } else if (name.includes('neutrals')) {
       return 'NU'
     }
     const a = name[0].charAt(0).toUpperCase()
     const b = name[1].charAt(0).toUpperCase()
-    return a+b
+    return a + b
   }
 }
