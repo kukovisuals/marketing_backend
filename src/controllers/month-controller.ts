@@ -37,7 +37,6 @@ export const createMonth = async (req: any, res: any, next: any) => {
   });
 
   const result = await createProfile.save();
-
   res.json(result);
 };
 /*
@@ -49,8 +48,6 @@ export const getMonth = async (req: any, res: any, next: any) => {
   const monthId = req.params.mvid;
 
   let monthView;
-  console.log('-------------------')
-  console.log(monthId)
   try {
     monthView = await Profile.find({ month: monthId });
   } catch (error) {

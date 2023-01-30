@@ -142,8 +142,12 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
 
       if (!profileSizeObject[profileName + '::' + profileSize])
         profileSizeObject[profileName + '::' + profileSize] = []
-
-      profileSizeObject[profileName + '::' + profileSize].push(sizeArray[j].name)
+      /*
+        ------------------------------------------------------------
+        -  Here you can change the payload id::sku::sizeId         -   
+        ------------------------------------------------------------
+      */
+      profileSizeObject[profileName + '::' + profileSize].push(sizeArray[j].id + '--' + sizeArray[j].name)
     }
     
   }
@@ -155,13 +159,15 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
     for (let i = 0; i < dataEntry.length; i++) {
       const keyName = dataEntry[i][0].split('::')[0]
       const size = dataEntry[i][0].split('::')[1]
-
       const sizeArray = dataEntry[i][1]
+      
       console.log(sizeArray, 'sizeArray')
       console.log(size,'size')
       console.log(keyName,'keyName')
+      
       const filter = { month: monthId, 'profiles.name': keyName, }
       const update = { $set: { ["profiles.$.sizes.0." + size]: sizeArray } }
+      
       Profile.updateOne(filter, update, (error: any, result: any) => {
         if (error) {
           console.log(error);
@@ -169,11 +175,6 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
           console.log(result);
         }
       });
-      // profilePost = await Profile.updateMany(
-      //     {month:monthId, 'profiles.name': keyName, },
-      //     { 'profiles.$.sizes': [ sizeArray ] },
-      //     { new: true },
-      // );
     }
   } catch (error) {
     const err = new HttpError("Something went wrong GET :mvid", 500);
