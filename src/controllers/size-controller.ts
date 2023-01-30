@@ -135,8 +135,8 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
     const profileSize = typeAndSize[1];
     const profileName = typeAndSize[0];
 
-    // console.log(' type -> ', typeAndSize)
-    // console.log(monthId, " name -----> ", profilePayload[i]);
+    console.log(' type -> ', typeAndSize)
+    console.log(monthId, " name -----> ", profilePayload[i]);
     const sizeArray = profilePayload[i].pdps2
     for (let j = 0; j < sizeArray.length; j++) {
 
@@ -145,9 +145,9 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
 
       profileSizeObject[profileName + '::' + profileSize].push(sizeArray[j].name)
     }
-    // console.log('size ', profileSize)
+    
   }
-  // console.log('profileSizeObject', profileSizeObject)
+  console.log('profileSizeObject', profileSizeObject)
 
   let profilePost;
   try {
@@ -157,12 +157,12 @@ export const createAllprofiles = async (req: any, res: any, next: any) => {
       const size = dataEntry[i][0].split('::')[1]
 
       const sizeArray = dataEntry[i][1]
-      console.log(sizeArray)
-      console.log(size)
-      console.log(keyName)
+      console.log(sizeArray, 'sizeArray')
+      console.log(size,'size')
+      console.log(keyName,'keyName')
       const filter = { month: monthId, 'profiles.name': keyName, }
-      const update =  { $set: { ["profiles.$.sizes.0." + size]: sizeArray } }
-      Profile.updateOne(filter, update , (error: any, result: any) => {
+      const update = { $set: { ["profiles.$.sizes.0." + size]: sizeArray } }
+      Profile.updateOne(filter, update, (error: any, result: any) => {
         if (error) {
           console.log(error);
         } else {
@@ -199,6 +199,9 @@ function payloadFactory(payload: any) {
   function distributionCenter(singleOb: any) {
     const str = singleOb.name
     const left = formatName(str)
+    if (str.includes('_')) {
+      return left
+    }
     const right = formatShippedName(str)
     const size = formatSizeName(str)
     return [left + ' - ' + right, size]
@@ -207,10 +210,20 @@ function payloadFactory(payload: any) {
 
   function formatName(str: string) {
     const formatName = str.split('in')
-    const left = handleLeftRight(formatName[0].toLowerCase())
-    const right = handleLeftRight(formatName[1].toLowerCase())
+    const valueLeft = formatName[0]
+    const valueRight = formatName[1]
+    let left = valueLeft.trim(), right = valueRight.trim();
 
+
+    if (valueLeft.includes('_')) {
+      console.log('bakcend size-controller: -> ', [left + ',' + right])
+      return [left, right]
+    }
+    console.log('bakcend size-controller -___- ', formatName)
+    left = handleLeftRight(valueLeft.toLowerCase())
+    right = handleLeftRight(valueRight.toLowerCase())
     return left + '_' + right
+
   }
 
   function formatShippedName(str: string) {
@@ -229,6 +242,7 @@ function payloadFactory(payload: any) {
 
   function handleLeftRight(str: string) {
     const name = str.trim().split(' ')
+
     if (name.includes('mixed')) {
       return 'MX'
     } else if (name.includes('neutrals')) {
